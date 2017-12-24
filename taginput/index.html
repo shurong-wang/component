@@ -8,7 +8,7 @@
     <title>关系发现</title>
     <link href="http://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.css" rel="stylesheet">
     <link href="http://cdn.bootcss.com/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.css" rel="stylesheet">
-    <link rel="stylesheet" href="./assets/tagsinput-custom.css">
+    <link rel="stylesheet" href="./assets/tagsinput.css">
     <script src="http://cdn.bootcss.com/jquery/3.1.0/jquery.min.js"></script>
     <script src="http://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
     <script src="http://cdn.bootcss.com/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.min.js"></script>
@@ -18,20 +18,33 @@
 
 <body>
     <!-- https://github.com/bootstrap-tagsinput/bootstrap-tagsinput -->
-    
-    <input type="text" />
-    
-    <button id="btn-relation" type="button" class="btn btn-success btn-relation">发现关系</button>
-    
+
+    <input id="tags-input" type="text" />
+
+    <button id="button-relation" type="button" class="btn btn-success button-relation" disabled>
+        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+        <span>发现关系</span>
+        <span class='btn-msg'>（至少添加 2 家公司）</span>
+    </button>
+
     <script>
         const API = 'assets/companies.json?keyword=';
         // const API = 'http://192.168.1.27:8080/jstx/findCompanyMenu.do?name=';
 
-        const elt = $('input');
-        let companyIds = new Set([]);
-        let companies = {};
+        // 数据双向绑定 - 视图
+        const VIEW = {
+            tagsInput: $('#tags-input'),
+            relButton: $('#button-relation')
+        }
 
-        elt.tagsinput({
+        // 数据双向绑定 - 模型
+        function Company(ids = '', items = []) {
+            this.ids = ids;
+            this.items = items;
+        }
+
+        // 配置 tagsinput
+        VIEW.tagsInput.tagsinput({
             itemValue: 'id',
             itemText: 'name',
             maxTags: 5,
@@ -44,15 +57,59 @@
             typeaheadjs: {
                 name: 'companies',
                 displayKey: 'name',
-                source: _.debounce(fetchSource, 300)
+                source: _.debounce(fetchCompanies, 300)
             }
         });
 
-        elt.tagsinput('focus');
+        // 视图 -> 数据
+        Company.prototype.bind = function (VIEW) {
+            VIEW.tagsInput
+                .on('beforeItemAdd beforeItemRemove', event => {
+                    // todo...
+                })
+                .on('itemAdded itemRemoved', event => {
+                    // ** 特别注意 this 上下文 ** //
+                    this.ids = VIEW.tagsInput.val();
+                    this.items = VIEW.tagsInput.tagsinput('items');
+                });
 
-        $('#btn-relation').on('click', getRelation);
+            // 自动获取焦点
+            VIEW.tagsInput.tagsinput('focus');
 
-        function fetchSource(keyword, syncResults, asyncResults) {
+            // 发现关系
+            VIEW.relButton.on('click', getRelation);
+        }
+
+        // 数据 -> 视图
+        Object.defineProperty(Company.prototype, 'ids', {
+            set: function (ids = '') {
+                const count = ids.split(',').length;
+                const msg = count > 5 ? '（最多添加 5 家公司）' : (count < 2 ?
+                    '（至少添加 2 家公司）' : '');
+                VIEW.relButton.prop('disabled', count < 2 || count > 5);
+                VIEW.relButton.find('.btn-msg').text(msg);
+            },
+            get: function () {
+                return VIEW.tagsInput.val();
+            }
+        });
+        Object.defineProperty(Company.prototype, 'items', {
+            set: function (items = []) {
+                for (const item of items) {
+                    VIEW.tagsInput.tagsinput('add', item);
+                }
+            },
+            get: function () {
+                return VIEW.tagsInput.tagsinput('items');
+            }
+        });
+
+        // 数据双向绑定
+        const company = new Company('', []);
+        company.bind(VIEW);
+
+        // 获取公司列表（参数格式由 tagsinput 组件决定）
+        function fetchCompanies(keyword, syncResults, asyncResults) {
             if (keyword.trim().length < 2) {
                 // return;
             }
@@ -67,13 +124,15 @@
                 console.error(error);
             }
         }
-
+     
         function getRelation() {
-            const companyIds = elt.val();	
-            const companyItems = elt.tagsinput('items');
-            console.log(companyIds, companyItems);
-        }
+            const {
+                ids,
+                items
+            } = company;
 
+            console.log(company);
+        }
     </script>
 </body>
 
