@@ -31,6 +31,30 @@
         const API = 'assets/companies.json?keyword=';
         // const API = 'http://192.168.1.27:8080/jstx/findCompanyMenu.do?name=';
 
+        // ajax 预配置 && 预过滤器
+        ;(function ($) {
+            const pendingRequests = {};
+            $.ajaxPrefilter(function (options, originalOptions, jqXHR) {
+                const key = options.url;
+                if (pendingRequests[key]) {
+                    pendingRequests[key].abort();
+                }
+                pendingRequests[key] = jqXHR;
+                var complete = options.complete;
+                options.complete = function (jqXHR, textStatus) {
+                    pendingRequests[key] = null;
+                    if ($.isFunction(complete)) {
+                        complete.apply(this, arguments);
+                    }
+                };
+            });
+            $.ajaxSetup({
+                timeout: 3000,
+                crossDomain: true
+            });
+        })(jQuery);
+
+
         // 数据双向绑定 - 视图
         const VIEW = {
             tagsInput: $('#tags-input'),
@@ -114,17 +138,30 @@
                 // return;
             }
             try {
-                $.get(API + keyword, function (data) {
-                    if (typeof data === 'string') {
-                        data = JSON.parse(data);
-                    }
-                    asyncResults(data);
-                });
+                $.get(API + keyword)
+                const jqxhr = $.ajax({
+                        url: API + keyword,
+                        method: 'GET'
+                    })
+                    .done(function (data) {
+                        if (typeof data === 'string') {
+                            data = JSON.parse(data);
+                        }
+                        asyncResults(data);
+                    })
+                    .fail(function (jqXHR, textStatus, errorThrown) {
+                        if (errorThrown != 'abort') {
+                            console.log(errorThrown);
+                        }　　
+                        if (errorThrown == 'timeout') {　
+                            console.error('请求超时，请稍后重试！');
+                        }
+                    });
             } catch (error) {
                 console.error(error);
             }
         }
-     
+
         function getRelation() {
             const {
                 ids,
