@@ -28,11 +28,15 @@
     </button>
 
     <script>
-        const API = 'assets/companies.json?keyword=';
-        // const API = 'http://192.168.1.27:8080/jstx/findCompanyMenu.do?name=';
+        const SEARCH_API = 'assets/companies.json?keyword=';
+        // const SEARCH_API = 'http://192.168.1.27:8080/jstx/findCompanyMenu.do?name=';
+        const RELATION_API = 'http://192.168.1.27:8080/jstx/findRelations.do?ids=';
+
+        const relationCache = new Map();
 
         // ajax 预配置 && 预过滤器
-        ;(function ($) {
+        ;
+        (function ($) {
             const pendingRequests = {};
             $.ajaxPrefilter(function (options, originalOptions, jqXHR) {
                 const key = options.url;
@@ -134,15 +138,12 @@
 
         // 获取公司列表（参数格式由 tagsinput 组件决定）
         function fetchCompanies(keyword, syncResults, asyncResults) {
+            const url = SEARCH_API + keyword;
             if (keyword.trim().length < 2) {
                 // return;
             }
             try {
-                $.get(API + keyword)
-                const jqxhr = $.ajax({
-                        url: API + keyword,
-                        method: 'GET'
-                    })
+                const jqxhr = $.get(url)
                     .done(function (data) {
                         if (typeof data === 'string') {
                             data = JSON.parse(data);
@@ -163,12 +164,46 @@
         }
 
         function getRelation() {
-            const {
-                ids,
-                items
-            } = company;
+            const url = RELATION_API + company.ids;
 
-            console.log(company);
+            // 读取缓存数据
+            const cached = relationCache.get(url);
+            if (cached) {
+                return cached;
+            }
+
+            const jqxhr = $.ajax({
+                    url: url,
+                    method: 'GET'
+                })
+                .done(function (data) {
+                    if (typeof data === 'string') {
+                        data = JSON.parse(data);
+                    }
+                    if (isSafeJSON(data)) {
+                        // 设置缓存数据
+                        cache.set(url, data);
+                    }
+                    asyncResults(data);
+                })
+                .fail(function (jqXHR, textStatus, errorThrown) {
+                    if (errorThrown != 'abort') {
+                        console.log(errorThrown);
+                    }　　
+                    if (errorThrown == 'timeout') {　
+                        console.error('请求超时，请稍后重试！');
+                    }
+                });
+
+        }
+
+        function isSafeJSON(json) {
+            if ({}.toString.call(json) === '[object Object]') {
+                for (const key in json) {
+                    return true;
+                }
+            }
+            return false;
         }
     </script>
 </body>
