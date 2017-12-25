@@ -19,13 +19,25 @@
 <body>
     <!-- https://github.com/bootstrap-tagsinput/bootstrap-tagsinput -->
 
-    <input id="tags-input" type="text" />
+    <div id="search-container" class="search-container well">
+        <button id="button-collapse" class="btn btn-primary button-collapse" type="button" data-toggle="collapse" 
+            data-target="#search-wraper" aria-expanded="false" aria-controls="search-wraper">
+            <span class="glyphicon glyphicon-th-list" aria-hidden="true"></span>
+            <span>添加公司</span>
+        </button>
 
-    <button id="button-relation" type="button" class="btn btn-success button-relation" disabled>
-        <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
-        <span>发现关系</span>
-        <span class='btn-msg'>（至少添加 2 家公司）</span>
-    </button>
+        <div id="search-wraper" class="collapse search-wraper">
+            <!-- 搜索框 -->
+            <input id="tags-input" type="text" />
+            <!-- 提交按钮 -->
+            <button id="button-relation" type="button" class="btn btn-success button-relation" data-loading-text="加载中..." disabled>
+                <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                <span>发现关系</span>
+                <span class='btn-msg'>（至少添加 2 家公司）</span>
+            </button>
+        </div>
+    </div>
+
 
     <script>
         const SEARCH_API = 'assets/companies.json?keyword=';
@@ -61,6 +73,7 @@
 
         // 数据双向绑定 - 视图
         const VIEW = {
+            searchWrap: $('#search-wraper'),
             tagsInput: $('#tags-input'),
             relButton: $('#button-relation')
         }
@@ -153,8 +166,8 @@
                     .fail(function (jqXHR, textStatus, errorThrown) {
                         if (errorThrown != 'abort') {
                             console.log(errorThrown);
-                        }　　
-                        if (errorThrown == 'timeout') {　
+                        }
+                        if (errorThrown == 'timeout') {
                             console.error('请求超时，请稍后重试！');
                         }
                     });
@@ -166,16 +179,23 @@
         function getRelation() {
             const url = RELATION_API + company.ids;
 
+            console.log(url);
+            VIEW.searchWrap.collapse('hide');
+
+            return;
+
             // 读取缓存数据
             const cached = relationCache.get(url);
             if (cached) {
                 return cached;
             }
 
+            const $btn = $(this).button('loading');
+
             const jqxhr = $.ajax({
-                    url: url,
-                    method: 'GET'
-                })
+                url: url,
+                method: 'GET'
+            })
                 .done(function (data) {
                     if (typeof data === 'string') {
                         data = JSON.parse(data);
@@ -184,16 +204,20 @@
                         // 设置缓存数据
                         cache.set(url, data);
                     }
-                    asyncResults(data);
+                    console.log(data);
+
                 })
                 .fail(function (jqXHR, textStatus, errorThrown) {
                     if (errorThrown != 'abort') {
                         console.log(errorThrown);
-                    }　　
-                    if (errorThrown == 'timeout') {　
+                    }
+                    if (errorThrown == 'timeout') {
                         console.error('请求超时，请稍后重试！');
                     }
-                });
+                })
+                .always(function (jqXHR, textStatus, errorThrown) {
+                    $btn.button('reset');
+                })
 
         }
 
