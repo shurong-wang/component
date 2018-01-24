@@ -51,6 +51,9 @@
                 displayKey: 'text',
                 source: function (keyword, syncResults, asyncResults) {
                     $.get('assets/cities.json?keyword=' + keyword, function (data) {
+                       if (typeof data === 'string') {
+                            data = JSON.parse(data);
+                        }
                         asyncResults(data);
                     });
                 }
