@@ -41,11 +41,11 @@
             });
 
             function renderProgress($element, percent) {
-                var width = percent * $element.width() / 100;
-                console.log(percent + "%");
+                // 保留两位小数
+                percent = ~~(percent * 100) / 100;
                 $element.find('.bar')
-                    .animate({ width: width }, 500)
-                    .html(percent + "%");
+                    .css('width', percent + '%')
+                    .html(percent + '%');
             }
 
         });
