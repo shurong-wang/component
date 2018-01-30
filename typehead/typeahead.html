@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Bootstrap-3-Typeahead</title>
+    <link href="http://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.css" rel="stylesheet">
+</head>
+
+<body>
+    <!-- https://github.com/bassjobsen/Bootstrap-3-Typeahead -->
+
+    <div class="main">
+        <input type="text" name="companyName" autocomplete="off" data-provide="typeahead" class="typeahead form-control input-sm"
+            placeholder="请输入公司名">
+        <input type="hidden" id="companyId" name="companyId">
+    </div>
+
+    <script src="http://cdn.bootcss.com/jquery/3.1.0/jquery.min.js"></script>
+    <script src="http://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+    <script src="https://cdn.bootcss.com/lodash.js/4.17.4/lodash.min.js"></script>
+    <script src="./lib/typeahead/bootstrap3-typeahead.js"></script>
+    <script src="./assets/ajaxPrefilter.js"></script>
+    <script>
+
+        const SEARCH_API = 'assets/companies.json';
+        const $input = $(".typeahead");
+
+        $input.typeahead({
+            items: 5,  // 搜索结果列表显示的最大数量，可以设置为 all
+            showHintOnFocus: true,  // 聚焦时自动触发搜索
+            minLength: 2, // 显示搜索条目所需的最少字符数，不能控制请求发出，在 showHintOnFocus 为 true 时无效
+            autoSelect: false, // 否自动选择第一个建议
+            delay: 200, // 在查找之间添加延迟，防抖动
+            fitToElement: true, // 搜索条目与搜索尺寸一致
+            addItem: false, // 在 list 最后添加一个条目
+            appendTo: null, // 搜索条目所在 div，默认显示在搜索框之后。设置后不能直接使用 bootstrap 的 dropdown 相关组件
+
+            // 发送请求，查询数据源
+            source: function (query, process) { // source 参数: query-搜索关键字, process-回掉函数
+                if (query.trim().length < 2) {
+                    // return;
+                }
+                $.get(SEARCH_API, { companyName: query })
+                    .done(function (data) {
+                        if (typeof data === 'string') {
+                            data = JSON.parse(data);
+                        }
+                        process(data);
+                    })
+                    .fail(function (jqXHR, textStatus, errorThrown) {
+                        if (errorThrown != 'abort') {
+                            console.warn(errorThrown);
+                        }
+                        if (errorThrown == 'timeout') {
+                            console.warn('请求超时，请稍后重试！');
+                        }
+                    })
+                    .always(function (jqXHR, textStatus, errorThrown) {
+                        // ...
+                    });
+            },
+
+            // 设置搜索条目显示的文本字段
+            displayText: function (item) {
+                return typeof item !== 'undefined' && typeof item.name != 'undefined' ? item.name : item;
+            },
+
+            // 确定匹配条目的规则
+            matcher: function (item) {
+                // todo ...
+                return item;
+            },
+
+            // 更新搜索框的值（***关键方法***) -- 此处可以获得选中搜索条目的全部字段
+            updater: function (item) {
+                // todo ...
+                $('#companyId').val(item.id);
+                return item.name;
+            },
+
+            // 对结果进行排序
+            sorter: function (items) {
+                // todo ...
+                return items;
+            },
+
+            // 高亮自动补全的结果
+            highlighter: function (item) {
+                // todo ...
+                return item;
+            },
+
+            // 选择一个条目后的回调函数
+            afterSelect: function (itemName) {
+                // todo ...
+                return itemName;
+            }
+        });
+    </script>
+</body>
+
+</html>
