@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="asset/scrennfull.css">
 </head>
 
+<!-- https://github.com/sindresorhus/screenfull.js -->
+<!-- https://davidwalsh.name/fullscreen -->
+
 <body>
     <section id="container" class="container">
         <section id="full-element">
@@ -74,10 +77,6 @@
                 $('#status').text('进入全屏: ' + screenfull.isFullscreen);
                 if (elem) {
                     $('#element').text('全屏元素: ' + elem.localName + (elem.id ? '#' + elem.id : ''));
-                }
-                if (!screenfull.isFullscreen) {
-                    $('#external-iframe').remove();
-                    document.body.style.overflow = 'auto';
                 }
             }
 
