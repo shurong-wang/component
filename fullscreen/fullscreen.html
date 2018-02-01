@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>全屏示例</title>
+    <link rel="stylesheet" href="asset/scrennfull.css">
+</head>
+
+<body>
+    <section id="container" class="container">
+        <section id="full-element">
+            <header>
+                <h1>全屏示例</h1>
+                <p>跨浏览器兼容的全屏示例，参考
+                    <a href="https://developer.mozilla.org/en/DOM/Using_full-screen_mode">Fullscreen API</a>。 可以控制整页全屏或指定元素全屏。
+            </header>
+            <hr>
+            <section>
+                <p>体验全屏 API</p>
+                <button id="request">特定元素全屏</button>
+                <button id="exit">退出全屏</button>
+                <button id="toggle">全屏切换</button>
+                <button id="request2">整个页面全屏</button>
+            </section>
+            <section>
+                <ul>
+                    <li id="supported"></li>
+                    <li id="status"></li>
+                    <li id="element"></li>
+                </ul>
+            </section>
+        </section>
+        <hr>
+        <section>
+            <p>点击图片，只图片进入全屏</p>
+            <img id="demo-img" src="https://sindresorhus.com/unicorn" width="500">
+        </section>
+    </section>
+
+
+    <script src="https://cdn.bootcss.com/jquery/1.12.4/jquery.min.js"></script>
+    <script src="asset/screenfull.js"></script>
+    <script>
+        $(function () {
+            $('#supported').text('支持/允许: ' + !!screenfull.enabled);
+            if (!screenfull.enabled) {
+                return false;
+            }
+
+            $('#request').click(function () {
+                screenfull.request(document.getElementById('full-element'));
+            });
+
+            $('#exit').click(function () {
+                screenfull.exit();
+            });
+
+            $('#toggle').click(function () {
+                screenfull.toggle(document.getElementById('full-element'));
+            });
+
+            $('#request2').click(function () {
+                screenfull.request();
+            });
+
+            $('#demo-img').click(function () {
+                screenfull.toggle(this);
+            });
+
+            function fullscreenchange() {
+                var elem = screenfull.element;
+                $('#status').text('进入全屏: ' + screenfull.isFullscreen);
+                if (elem) {
+                    $('#element').text('全屏元素: ' + elem.localName + (elem.id ? '#' + elem.id : ''));
+                }
+                if (!screenfull.isFullscreen) {
+                    $('#external-iframe').remove();
+                    document.body.style.overflow = 'auto';
+                }
+            }
+
+            screenfull.on('change', fullscreenchange);
+
+            // Set the initial values
+            fullscreenchange();
+        });
+    </script>
+</body>
+
+</html>
